@@ -1,0 +1,53 @@
+
+version: "3"
+
+services:
+
+  postgres:
+    container_name: pg-1
+    image: postgres:14-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - '5434:5432'
+    volumes:
+      - db:/var/lib/postgresql/data
+    networks:
+      - network
+
+  php:
+    container_name: php-1
+    build:
+      context: .
+      dockerfile: ./php/Dockerfile
+    ports:
+      - '9000:9000'
+    volumes:
+      - ./back:/var/www/project
+    depends_on:
+      - postgres
+    networks:
+      - network
+
+  nginx:
+    container_name: nx-1
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./back:/var/www/project
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - postgres
+      - php
+    networks:
+      - network
+
+volumes:
+  db:
+    driver: local
+
+networks:
+  network:
